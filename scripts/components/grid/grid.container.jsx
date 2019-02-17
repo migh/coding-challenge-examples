@@ -1,33 +1,38 @@
 import React, { Component } from 'react';
-import Grid from './grid';
-import Controls from './controls';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 
-const testUrl =
-  'https://jsonplaceholder.typicode.com/photos?_limit=9&_page=1&_sort=title&_order=asc';
+import { loadPage } from '../../actions';
+import Grid from './grid';
 
 class GridContainer extends Component {
-  state = { imageData: [] };
+  static propTypes = {
+    loadPage: PropTypes.func.isRequired,
+    sortOrder: PropTypes.string.isRequired,
+    paginate: PropTypes.shape({
+      page: PropTypes.number,
+      images: PropTypes.arrayOf(PropTypes.object),
+      isFetching: PropTypes.bool
+    }).isRequired
+  };
 
   componentDidMount() {
-    fetch(testUrl)
-      .then(response => response.json())
-      .then(data => {
-        this.setState({
-          imageData: data.sort((a, b) => a.title - b.title)
-        });
-      });
+    const { loadPage: load } = this.props;
+    load();
   }
 
   render() {
-    const { imageData } = this.state;
-
-    return (
-      <div>
-        <Grid source={imageData} />
-        <Controls length={5} start={1} />
-      </div>
-    );
+    const { sortOrder, paginate } = this.props;
+    return <Grid sortOrder={sortOrder} {...paginate} />;
   }
 }
 
-export default GridContainer;
+const mapStateToProps = state => ({
+  sortOrder: state.sortOrder,
+  paginate: state.paginate
+});
+
+export default connect(
+  mapStateToProps,
+  { loadPage }
+)(GridContainer);
